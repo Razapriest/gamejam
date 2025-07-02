@@ -469,6 +469,9 @@ while True:
                                     turrets.append(Turret(col, row, selected_number))
                                 selected_number = None
 
+    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+        selected_number = None
+
     current_time = pygame.time.get_ticks()
 
     if current_time - last_move >= move_interval: # 1 "move tick" = 1 second
