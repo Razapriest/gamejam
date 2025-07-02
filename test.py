@@ -76,6 +76,7 @@ REWIND_BUTTON_Y = GRID_START_Y + GRID_HEIGHT // 5
 REWIND_BUTTON_RADIUS = CELL_SIZE * 0.75
 
 player_hp = 10
+currency = 1000
 
 saved_states = []
 
@@ -138,6 +139,7 @@ def save_game_state():
         'logic_matrix': copy.deepcopy(LOGIC_MATRIX),
         'turrets': copy.deepcopy(turrets),
         'hp': player_hp,
+        'currency': currency,
         'wave_number': wave_number,
     }
     saved_states.append(state) #save everything
@@ -352,6 +354,7 @@ def rewind():
         LOGIC_MATRIX = [row[:] for row in saved_state["logic_matrix"]]
         turrets = saved_state["turrets"][:]
         player_hp = saved_state["hp"]
+        currency = saved_state["currency"]
         wave_number = saved_state["wave_number"]
         hp_ref = [player_hp]
         trigger_anomaly(hp_ref)
@@ -383,10 +386,26 @@ wave_spawn_interval = 2000
 last_wave_spawn = 0
 wave_enemies_per_spawn = 1
 wave_number = 0
+wave_queue_index = 0
+NUM_WAVES = 5
+preloaded_waves = []  # List of lists, one list per wave
+
+for wave_num in range(1, NUM_WAVES + 1):
+    wave_enemies = []
+    prev_pos = None
+    num_enemies = 2 + 3 * wave_num
+    while len(wave_enemies) < num_enemies:
+        new_enemy = Enemy()
+        new_pos = (new_enemy.x, new_enemy.y)
+        if new_pos != prev_pos:
+            wave_enemies.append(new_enemy)
+            prev_pos = new_pos
+    preloaded_waves.append(wave_enemies)
 
 rewind_used = False
-
 save_game_state()
+prev_pos = None
+
 
 while True:
     for event in pygame.event.get():
@@ -419,34 +438,22 @@ while True:
                             rewind_used = True
 
                     if dist_wave <= WAVE_BUTTON_RADIUS:
-                        if not wave_active:
-                            saved_state = {
-                                "logic_matrix": [row[:] for row in LOGIC_MATRIX],  # Deep copy
-                                "turrets": turrets[:],
-                                "hp": player_hp,
-                                "wave_number": wave_number,
-                            }
+                        if not wave_active and wave_number < NUM_WAVES:
+                            save_game_state()
                             for row in range(ROWS):
                                 for col in range(COLS):
-                                    if LOGIC_MATRIX[row][col] == 7 or LOGIC_MATRIX[row][col] == 8 or LOGIC_MATRIX[row][col] == 9:
+                                    if LOGIC_MATRIX[row][col] in (7, 8, 9):
                                         LOGIC_MATRIX[row][col] = 0
-                            # wave start
+
                             wave_active = True
                             wave_spawned_count = 0
                             last_wave_spawn = pygame.time.get_ticks()
-                            wave_queue = []
-                            prev_pos = None
 
-                            wave_number += 1  # wave number increases
                             rewind_used = False
-                            wave_total_enemies = 5 + (wave_number - 1) * 3  # add 3 enemies per wave
+                            wave_queue = [copy.deepcopy(e) for e in preloaded_waves[wave_number]]
+                            wave_total_enemies = len(wave_queue)
+                            wave_number += 1  # increase after accessing
 
-                            while len(wave_queue) < wave_total_enemies:
-                                new_enemy = Enemy()
-                                new_pos = (new_enemy.x, new_enemy.y)
-                                if new_pos != prev_pos:
-                                    wave_queue.append(new_enemy)
-                                    prev_pos = new_pos
                         continue
 
                 # grid clicking
