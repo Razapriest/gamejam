@@ -11,7 +11,7 @@ SCREEN_WIDTH, SCREEN_HEIGHT = info.current_w, info.current_h
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Butterfly Defect")
-font = pygame.font.SysFont(None, 32)
+font = pygame.font.Font("Grand9K Pixel.ttf", 24)
 
 ROWS, COLS = 9, 9
 LOGIC_MATRIX = [[0 for x in range(COLS)] for y in range(ROWS)]
@@ -22,17 +22,13 @@ GRID_START_X = (SCREEN_WIDTH - GRID_WIDTH) // 2
 GRID_START_Y = (SCREEN_HEIGHT - int(GRID_HEIGHT * 1.25)) // 2
 
 WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-GRID_COLOR = (200, 200, 200)
-BUTTON_COLOR = (100, 100, 250)
-RED = (255, 0, 0)
 
 def load_sprite(filename):
     img = pygame.image.load(filename).convert_alpha()
     return pygame.transform.scale(img, (CELL_SIZE, CELL_SIZE))
 
 sprites = {
-    1: load_sprite("treasure.png"),
+    1: load_sprite("cat.png"),
     2: load_sprite("turret_1.png"),
     3: load_sprite("turret_2.png"),
     4: load_sprite("turret_3.png"),
@@ -44,11 +40,12 @@ sprites = {
     10: load_sprite("dead_zone.png"),
 }
 
+BUTTON_SIZE = (128, 128)
 turret_button_images = {
-    1: pygame.image.load("button_1.png").convert_alpha(),
-    2: pygame.image.load("button_2.png").convert_alpha(),
-    3: pygame.image.load("button_3.png").convert_alpha(),
-    4: pygame.image.load("button_4.png").convert_alpha(),
+    1: pygame.transform.scale(pygame.image.load("button_fire.png").convert_alpha(), BUTTON_SIZE),
+    2: pygame.transform.scale(pygame.image.load("button_shock.png").convert_alpha(), BUTTON_SIZE),
+    3: pygame.transform.scale(pygame.image.load("button_gas.png").convert_alpha(), BUTTON_SIZE),
+    4: pygame.transform.scale(pygame.image.load("button_wall.png").convert_alpha(), BUTTON_SIZE),
 }
 
 wave_button_image = pygame.image.load("button_start.png").convert_alpha()
@@ -58,7 +55,7 @@ background_img = pygame.transform.scale(background_img, (SCREEN_WIDTH, SCREEN_HE
 
 # left button settings
 BUTTON_CENTER_X = GRID_START_X - CELL_SIZE * 3
-BUTTON_CENTER_Y = GRID_START_Y + GRID_HEIGHT // 2
+BUTTON_CENTER_Y = GRID_START_Y + GRID_HEIGHT * 0.3
 BUTTON_RADIUS = CELL_SIZE * 0.75
 
 button_positions = {
@@ -69,12 +66,12 @@ button_positions = {
 }
 
 #right button settings
-WAVE_BUTTON_X = GRID_START_X + GRID_WIDTH + CELL_SIZE * 2
-WAVE_BUTTON_Y = GRID_START_Y + GRID_HEIGHT // 2.5
+WAVE_BUTTON_X = GRID_START_X + GRID_WIDTH + CELL_SIZE * 2 - 5
+WAVE_BUTTON_Y = GRID_START_Y + GRID_HEIGHT // 2.8 - 5
 WAVE_BUTTON_RADIUS = CELL_SIZE * 0.75
 
-REWIND_BUTTON_X = GRID_START_X + GRID_WIDTH + CELL_SIZE * 4
-REWIND_BUTTON_Y = GRID_START_Y + GRID_HEIGHT // 5
+REWIND_BUTTON_X = GRID_START_X + GRID_WIDTH + CELL_SIZE * 4 - 10
+REWIND_BUTTON_Y = GRID_START_Y + GRID_HEIGHT // 5 + 5
 REWIND_BUTTON_RADIUS = CELL_SIZE * 0.75
 
 player_hp = 10
@@ -321,15 +318,19 @@ def draw_grid():
     rewind_rect = rewind_button_image.get_rect(center=(REWIND_BUTTON_X, REWIND_BUTTON_Y))
     screen.blit(rewind_button_image, rewind_rect)
 
-    below_grid_y = GRID_START_Y + GRID_HEIGHT + 20  # y under the grid
-    wave_num_text = font.render(f"Wave: {wave_number}", True, BLACK)
-    hp_text = font.render(f"HP: {player_hp}", True, RED)
+    below_grid_y = GRID_START_Y + GRID_HEIGHT + 25  # y under the grid
 
-    wave_text_rect = wave_num_text.get_rect(center=(SCREEN_WIDTH // 2, below_grid_y + 20)) # wave text
-    hp_text_rect = hp_text.get_rect(center=(SCREEN_WIDTH // 2, below_grid_y + 50)) # hp text
+    wave_num_text = font.render(f"Wave: {wave_number}", True, WHITE)
+    hp_text = font.render(f"HP: {player_hp}", True, WHITE)
+    currency_text = font.render(f"Currency: {currency}", True, WHITE)
+
+    wave_text_rect = wave_num_text.get_rect(center=(SCREEN_WIDTH // 2, below_grid_y + 50)) # wave text
+    hp_text_rect = hp_text.get_rect(center=(SCREEN_WIDTH // 2, below_grid_y + 80)) # hp text
+    currency_text_rect = currency_text.get_rect(center=(SCREEN_WIDTH // 2, below_grid_y + 110))
 
     screen.blit(wave_num_text, wave_text_rect)
     screen.blit(hp_text, hp_text_rect)
+    screen.blit(currency_text, currency_text_rect)
 
     # draw grid (continuously)
     for row in range(ROWS):
@@ -341,9 +342,6 @@ def draw_grid():
             value = LOGIC_MATRIX[row][col]
             if value in sprites:
                 screen.blit(sprites[value], (x, y))
-            elif value != 0:
-                text = font.render(str(value), True, BLACK)
-                screen.blit(text, text.get_rect(center=rect.center))
 
 def rewind():
     global LOGIC_MATRIX, enemies, turrets, player_hp, wave_number
@@ -355,8 +353,10 @@ def rewind():
         currency = saved_state["currency"]
         wave_number = saved_state["wave_number"]
         hp_ref = [player_hp]
+        currency_ref = [currency]
         trigger_anomaly(hp_ref)
         player_hp = hp_ref[0]
+        currency = currency_ref[0]
         show_popup("Rewinded time!")
         save_game_state()
     else:
@@ -419,6 +419,14 @@ while True:
                 dist = pygame.math.Vector2(mouse_pos).distance_to((x, y))
                 if dist <= BUTTON_RADIUS:
                     selected_number = number
+                    if selected_number == 2:
+                        currency_needed = 200
+                    elif selected_number == 3:
+                        currency_needed = 100
+                    elif selected_number == 4:
+                        currency_needed = 100
+                    else:
+                        currency_needed = 50
                     break
                 else:
                     # wave button
@@ -437,7 +445,6 @@ while True:
 
                     if dist_wave <= WAVE_BUTTON_RADIUS:
                         if not wave_active and wave_number < NUM_WAVES:
-                            save_game_state()
                             for row in range(ROWS):
                                 for col in range(COLS):
                                     if LOGIC_MATRIX[row][col] in (7, 8, 9):
@@ -461,10 +468,13 @@ while True:
                         cell_y = GRID_START_Y + row * CELL_SIZE
                         cell_rect = pygame.Rect(cell_x, cell_y, CELL_SIZE, CELL_SIZE)
                         if cell_rect.collidepoint(mouse_pos):
-                            if not wave_active and LOGIC_MATRIX[row][col] == 0 and selected_number:
+                            if not wave_active and LOGIC_MATRIX[row][col] == 0 and selected_number  and currency >= currency_needed:
                                 LOGIC_MATRIX[row][col] = selected_number
                                 if selected_number in (2, 3, 4, 5):
                                     turrets.append(Turret(col, row, selected_number))
+                                    currency = currency - currency_needed
+                                else:
+                                    selected_number = None
                                 selected_number = None
 
     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
@@ -518,6 +528,7 @@ while True:
             if player_hp > 0:
                 wave_active = False
                 show_popup("Wave cleared!")
+                currency += 500
                 save_game_state()
 
     mouse_pos = pygame.mouse.get_pos()
