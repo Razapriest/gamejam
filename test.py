@@ -3,7 +3,7 @@ import random
 import sys
 import copy
 import time
-# Test commit
+
 pygame.init()
 
 info = pygame.display.Info()
