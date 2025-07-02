@@ -86,10 +86,11 @@ popup = {
     "duration": 1  # seconds
 }
 
-def show_popup(text):
+def show_popup(text, timer):
     popup["text"] = text
     popup["start_time"] = time.time()
     popup["active"] = True
+    popup["duration"] = timer
 
 def draw_popup():
     if not popup["active"]:
@@ -101,7 +102,7 @@ def draw_popup():
         return
 
     #rectangle
-    rect_width, rect_height = 300, 100
+    rect_width, rect_height = len(popup["text"]) * 16 + 50, 100
     rect_x = (screen.get_width() - rect_width) // 2
     rect_y = (screen.get_height() - rect_height) // 2
 
@@ -344,7 +345,7 @@ def draw_grid():
                 screen.blit(sprites[value], (x, y))
 
 def rewind():
-    global LOGIC_MATRIX, enemies, turrets, player_hp, wave_number
+    global LOGIC_MATRIX, enemies, turrets, player_hp, wave_number, currency
     if len(saved_states) >= 2:
         saved_state = saved_states[-2]  # second to last save
         LOGIC_MATRIX = [row[:] for row in saved_state["logic_matrix"]]
@@ -353,11 +354,9 @@ def rewind():
         currency = saved_state["currency"]
         wave_number = saved_state["wave_number"]
         hp_ref = [player_hp]
-        currency_ref = [currency]
         trigger_anomaly(hp_ref)
         player_hp = hp_ref[0]
-        currency = currency_ref[0]
-        show_popup("Rewinded time!")
+        show_popup("Rewinded time!", 1.5)
         save_game_state()
     else:
         print("Not enough save states to rewind to second to last.")
@@ -383,7 +382,7 @@ wave_total_enemies = 5
 wave_spawn_interval = 2000
 last_wave_spawn = 0
 wave_enemies_per_spawn = 1
-wave_number = 0
+wave_number = 4
 wave_queue_index = 0
 NUM_WAVES = 5
 preloaded_waves = []  # List of lists, one list per wave
@@ -527,9 +526,12 @@ while True:
         if wave_spawned_count >= wave_total_enemies and not enemies:
             if player_hp > 0:
                 wave_active = False
-                show_popup("Wave cleared!")
                 currency += 500
                 save_game_state()
+                if wave_number == 5:
+                    show_popup(f"Game Finished! Score = {player_hp*currency/100}", 10)
+                else:
+                    show_popup("Wave cleared!", 1.5)
 
     mouse_pos = pygame.mouse.get_pos()
     tooltip_text = None  # default no tooltip
