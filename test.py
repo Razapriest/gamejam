@@ -77,7 +77,7 @@ REWIND_BUTTON_RADIUS = CELL_SIZE * 0.75
 
 player_hp = 10
 currency = 1000
-
+# Used for the rewind mechanic
 saved_states = []
 
 popup = {
@@ -133,7 +133,7 @@ def draw_tooltip(screen, text, mouse_pos):
     screen.blit(s, (bg_rect.x, bg_rect.y))
 
     screen.blit(text_surf, (tooltip_x, tooltip_y))
-
+# Saves a state, used for recall
 def save_game_state():
     state = {
         'logic_matrix': copy.deepcopy(LOGIC_MATRIX),
@@ -213,7 +213,7 @@ class Enemy:
         target = logic_matrix[new_y][new_x]
 
         # destroy turret
-        if (new_x, new_y) != (4, 4) and target in [1, 2, 3, 4, 5]:
+        if (new_x, new_y) != (4, 4) and target in [2, 3, 4, 5]:
             logic_matrix[self.y][self.x] = 0
             if target in [2, 3, 4, 5]:
                 for turret in turrets[:]:
@@ -389,7 +389,8 @@ wave_number = 0
 wave_queue_index = 0
 NUM_WAVES = 5
 preloaded_waves = []  # List of lists, one list per wave
-
+prev_pos = None
+# Generates all the waves at the beginning of the game
 for wave_num in range(1, NUM_WAVES + 1):
     wave_enemies = []
     prev_pos = None
@@ -404,7 +405,6 @@ for wave_num in range(1, NUM_WAVES + 1):
 
 rewind_used = False
 save_game_state()
-prev_pos = None
 
 
 while True:
