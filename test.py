@@ -53,6 +53,8 @@ turret_button_images = {
 
 wave_button_image = pygame.image.load("button_start.png").convert_alpha()
 rewind_button_image = pygame.image.load("button_rewind.png").convert_alpha()
+background_img = pygame.image.load("background_layout.png").convert()
+background_img = pygame.transform.scale(background_img, (SCREEN_WIDTH, SCREEN_HEIGHT))
 
 # left button settings
 BUTTON_CENTER_X = GRID_START_X - CELL_SIZE * 3
@@ -176,9 +178,6 @@ class Enemy:
         return x, y, quadrant
 
     def move_toward_center(self, logic_matrix, enemies, turrets, hp_ref):
-        if not self.has_moved:
-            self.has_moved = True #frozen on first move (lame workaround for a bug i cant fix)
-            return
 
         xdif = 4 - self.x
         ydif = 4 - self.y
@@ -307,7 +306,7 @@ def trigger_anomaly(hp_ref):
         hp_ref[0] -= 1
 
 def draw_grid():
-    screen.fill(WHITE)
+    screen.blit(background_img, (0, 0))
 
     # turret buttons:
     for number, (x, y) in button_positions.items():
@@ -338,7 +337,6 @@ def draw_grid():
             x = GRID_START_X + col * CELL_SIZE
             y = GRID_START_Y + row * CELL_SIZE
             rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
-            pygame.draw.rect(screen, GRID_COLOR, rect, 1)
 
             value = LOGIC_MATRIX[row][col]
             if value in sprites:
