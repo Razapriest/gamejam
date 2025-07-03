@@ -1,10 +1,16 @@
 import pygame
+from pygame.locals import *
+from pygame import mixer
 import random
 import sys
 import copy
 import time
 
 pygame.init()
+mixer.init()
+mixer.music.load("8bit.mp3")
+pygame.mixer.music.set_volume(0.3)
+pygame.mixer.music.play(-1,0.0)
 
 info = pygame.display.Info()
 SCREEN_WIDTH, SCREEN_HEIGHT = info.current_w, info.current_h
@@ -55,7 +61,7 @@ turret_button_images = {
 
 wave_button_image = pygame.transform.scale(pygame.image.load("start_wave.png").convert_alpha(), BUTTON_SIZE)
 rewind_button_image = pygame.transform.scale(pygame.image.load("rewind_button.png").convert_alpha(), BUTTON_SIZE)
-quit_button_image = pygame.transform.scale(pygame.image.load("quit_button.png").convert_alpha(), BUTTON_SIZE_SMALL)
+quit_button_image = pygame.transform.scale(pygame.image.load("quit_button_final.png").convert_alpha(), BUTTON_SIZE_SMALL)
 background_img = pygame.image.load("background_layout.png").convert()
 background_img = pygame.transform.scale(background_img, (SCREEN_WIDTH, SCREEN_HEIGHT))
 
@@ -93,6 +99,11 @@ popup = {
     "start_time": 0,
     "duration": 1  # seconds
 }
+
+def play_sound(sound_file):
+    SHOOT_SOUND = pygame.mixer.Sound(sound_file)
+    SHOOT_SOUND.set_volume(0.1)
+    SHOOT_SOUND.play()
 
 def show_popup(text, timer):
     popup["text"] = text
@@ -597,5 +608,6 @@ while True:
     draw_popup()
     if tooltip_text:
         draw_tooltip(screen, tooltip_text, mouse_pos)
+        play_sound("boom.mp3")
     pygame.display.flip()
     clock.tick(60)
