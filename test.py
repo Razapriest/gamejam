@@ -27,9 +27,9 @@ GRID_COLOR = (200, 200, 200)
 BUTTON_COLOR = (100, 100, 250)
 RED = (255, 0, 0)
 
-def load_sprite(filename):
+def load_sprite(filename, CUSTOM_SIZE = (CELL_SIZE, CELL_SIZE)):
     img = pygame.image.load(filename).convert_alpha()
-    return pygame.transform.scale(img, (CELL_SIZE, CELL_SIZE))
+    return pygame.transform.scale(img, CUSTOM_SIZE)
 
 sprites = {
     1: load_sprite("treasure.png"),
@@ -58,6 +58,10 @@ def load_img(path):
     return img
 
 minions = [load_img("minions_test/frame_0" + str(num) + "_delay-0.04s.gif") for num in range(10)]
+
+cat_bottom_right = [load_sprite("cat_animation/f1.png", CUSTOM_SIZE = (530 // 2, 615 // 2)),
+                    load_sprite("cat_animation/f2.png", CUSTOM_SIZE = (530 // 2, 615 // 2)),
+                    load_sprite("cat_animation/f3.png", CUSTOM_SIZE = (530 // 2, 615 // 2))]
 
 wave_button_image = pygame.image.load("button_start.png").convert_alpha()
 rewind_button_image = pygame.image.load("button_rewind.png").convert_alpha()
@@ -376,10 +380,14 @@ sprites_coords = {}
 
 for value in sprites:
     sprites_coords[value] = [(-1, -1)]
-    if value != 6:
-        objects_to_animate.append(Animated(sprites_coords[value], [sprites[value]], coords_can_change = True))
-    else:
-        objects_to_animate.append(Animated(sprites_coords[value], sprites[value], coords_can_change = True, time_to_complete_loop = 0.3))
+    # See if sprites is an array or not
+    try:
+        sprites[value][0]
+        objects_to_animate.append(Animated(sprites_coords[value], sprites[value], coords_can_change = True, time_to_complete_loop = 1))
+    except:
+        objects_to_animate.append(Animated(sprites_coords[value], [sprites[value]], coords_can_change = True, time_to_complete_loop = 1))
+
+objects_to_animate.append(Animated((GRID_START_X + GRID_WIDTH + CELL_SIZE + 20, GRID_START_Y + GRID_HEIGHT // 2 + 70), cat_bottom_right))
 
 
 def draw_grid():
