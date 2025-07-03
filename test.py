@@ -13,6 +13,10 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Butterfly Defect")
 font = pygame.font.Font("Grand9K Pixel.ttf", 24)
 
+player_hp = 10
+currency = 500
+reward = 250
+
 ROWS, COLS = 9, 9
 LOGIC_MATRIX = [[0 for x in range(COLS)] for y in range(ROWS)]
 LOGIC_MATRIX[4][4] = 1
@@ -29,18 +33,19 @@ def load_sprite(filename):
 
 sprites = {
     1: load_sprite("cat.png"),
-    2: load_sprite("turret_1.png"),
-    3: load_sprite("turret_2.png"),
-    4: load_sprite("turret_3.png"),
-    5: load_sprite("turret_4.png"),
+    2: load_sprite("turret_orange.png"),
+    3: load_sprite("turret_blue.png"),
+    4: load_sprite("turret_green.png"),
+    5: load_sprite("turret_purple.png"),
     6: load_sprite("enemy.png"),
-    7: load_sprite("projectile_1.png"),
-    8: load_sprite("projectile_2.png"),
-    9: load_sprite("projectile_3.png"),
-    10: load_sprite("dead_zone.png"),
+    7: load_sprite("bullet_orange.png"),
+    8: load_sprite("bullet_blue.png"),
+    9: load_sprite("bullet_green.png"),
+    10: load_sprite("dead_zone_final.png"),
 }
 
-BUTTON_SIZE = (128, 128)
+BUTTON_SIZE = (120, 120)
+BUTTON_SIZE_SMALL = (80, 80)
 turret_button_images = {
     1: pygame.transform.scale(pygame.image.load("button_fire.png").convert_alpha(), BUTTON_SIZE),
     2: pygame.transform.scale(pygame.image.load("button_shock.png").convert_alpha(), BUTTON_SIZE),
@@ -48,8 +53,9 @@ turret_button_images = {
     4: pygame.transform.scale(pygame.image.load("button_wall.png").convert_alpha(), BUTTON_SIZE),
 }
 
-wave_button_image = pygame.image.load("button_start.png").convert_alpha()
-rewind_button_image = pygame.image.load("button_rewind.png").convert_alpha()
+wave_button_image = pygame.transform.scale(pygame.image.load("start_wave.png").convert_alpha(), BUTTON_SIZE)
+rewind_button_image = pygame.transform.scale(pygame.image.load("rewind_button.png").convert_alpha(), BUTTON_SIZE)
+quit_button_image = pygame.transform.scale(pygame.image.load("quit_button.png").convert_alpha(), BUTTON_SIZE_SMALL)
 background_img = pygame.image.load("background_layout.png").convert()
 background_img = pygame.transform.scale(background_img, (SCREEN_WIDTH, SCREEN_HEIGHT))
 
@@ -59,23 +65,25 @@ BUTTON_CENTER_Y = GRID_START_Y + GRID_HEIGHT * 0.3
 BUTTON_RADIUS = CELL_SIZE * 0.75
 
 button_positions = {
-    2: (BUTTON_CENTER_X, BUTTON_CENTER_Y - CELL_SIZE * 1.5),  # Top
-    3: (BUTTON_CENTER_X + CELL_SIZE * 1.5, BUTTON_CENTER_Y),  # Right
-    4: (BUTTON_CENTER_X, BUTTON_CENTER_Y + CELL_SIZE * 1.5),  # Bottom
-    5: (BUTTON_CENTER_X - CELL_SIZE * 1.5, BUTTON_CENTER_Y),  # Left
+    2: (BUTTON_CENTER_X, BUTTON_CENTER_Y - CELL_SIZE * 1.5 - 10),  # Top
+    3: (BUTTON_CENTER_X + CELL_SIZE * 1.5, BUTTON_CENTER_Y - 10),  # Right
+    4: (BUTTON_CENTER_X, BUTTON_CENTER_Y + CELL_SIZE * 1.5 - 10),  # Bottom
+    5: (BUTTON_CENTER_X - CELL_SIZE * 1.5, BUTTON_CENTER_Y - 10),  # Left
 }
 
 #right button settings
 WAVE_BUTTON_X = GRID_START_X + GRID_WIDTH + CELL_SIZE * 2 - 5
-WAVE_BUTTON_Y = GRID_START_Y + GRID_HEIGHT // 2.8 - 5
+WAVE_BUTTON_Y = GRID_START_Y + GRID_HEIGHT // 2.8
 WAVE_BUTTON_RADIUS = CELL_SIZE * 0.75
 
 REWIND_BUTTON_X = GRID_START_X + GRID_WIDTH + CELL_SIZE * 4 - 10
 REWIND_BUTTON_Y = GRID_START_Y + GRID_HEIGHT // 5 + 5
 REWIND_BUTTON_RADIUS = CELL_SIZE * 0.75
 
-player_hp = 10
-currency = 1000
+QUIT_BUTTON_X = GRID_START_X + GRID_WIDTH - CELL_SIZE
+QUIT_BUTTON_Y = GRID_START_Y + GRID_HEIGHT + CELL_SIZE * 1.4
+QUIT_BUTTON_RADIUS = CELL_SIZE * 0.75
+
 # Used for the rewind mechanic
 saved_states = []
 
@@ -117,22 +125,28 @@ def draw_popup():
 
 
 def draw_tooltip(screen, text, mouse_pos):
-    padding = 6
-    text_surf = font.render(text, True, (255, 255, 255))
-    text_rect = text_surf.get_rect()
+    padding = 10
+    lines = text.split("\n")
+    line_surfs = [font.render(line, True, (255, 255, 255)) for line in lines]
+    line_heights = [surf.get_height() for surf in line_surfs]
+    max_width = max(surf.get_width() for surf in line_surfs)
+    total_height = sum(line_heights)
 
     # position below cursor
-    tooltip_x = mouse_pos[0] - text_rect.width // 2
-    tooltip_y = mouse_pos[1] - text_rect.height // 2 + 30
+    tooltip_x = mouse_pos[0] - max_width // 2
+    tooltip_y = mouse_pos[1] + 30
 
     bg_rect = pygame.Rect(tooltip_x - padding, tooltip_y - padding,
-                          text_rect.width + 2 * padding, text_rect.height + 2 * padding)
+                          max_width + 2 * padding, total_height + 2 * padding)
 
     s = pygame.Surface((bg_rect.width, bg_rect.height), pygame.SRCALPHA)
     s.fill((0, 0, 0, 180))
     screen.blit(s, (bg_rect.x, bg_rect.y))
 
-    screen.blit(text_surf, (tooltip_x, tooltip_y))
+    current_y = tooltip_y
+    for surf in line_surfs:
+        screen.blit(surf, (tooltip_x, current_y))
+        current_y += surf.get_height()
 # Saves a state, used for recall
 def save_game_state():
     state = {
@@ -291,17 +305,15 @@ def fire_turrets(matrix, tick):
 
     return fired
 
-def trigger_anomaly(hp_ref):
-    anomaly_type = 0
-    if anomaly_type == 0:
+def trigger_anomaly():
+    show_popup("Rewinded time!", 1.5)
+    random_x = random.randint(1, COLS - 2)
+    random_y = random.randint(1, ROWS - 2)
+    while 3 <= random_x <= 5 and 3 <= random_y <= 5:
         random_x = random.randint(1, COLS - 2)
         random_y = random.randint(1, ROWS - 2)
-        while 3 <= random_x <= 5 and 3 <= random_y <= 5:
-            random_x = random.randint(1, COLS - 2)
-            random_y = random.randint(1, ROWS - 2)
-        LOGIC_MATRIX[random_y][random_x] =  10
-    if anomaly_type == 1:
-        hp_ref[0] -= 1
+    LOGIC_MATRIX[random_y][random_x] =  10
+
 
 def draw_grid():
     screen.blit(background_img, (0, 0))
@@ -318,6 +330,9 @@ def draw_grid():
 
     rewind_rect = rewind_button_image.get_rect(center=(REWIND_BUTTON_X, REWIND_BUTTON_Y))
     screen.blit(rewind_button_image, rewind_rect)
+
+    quit_rect = quit_button_image.get_rect(center=(QUIT_BUTTON_X, QUIT_BUTTON_Y))
+    screen.blit(quit_button_image, quit_rect)
 
     below_grid_y = GRID_START_Y + GRID_HEIGHT + 25  # y under the grid
 
@@ -354,9 +369,8 @@ def rewind():
         currency = saved_state["currency"]
         wave_number = saved_state["wave_number"]
         hp_ref = [player_hp]
-        trigger_anomaly(hp_ref)
+        trigger_anomaly()
         player_hp = hp_ref[0]
-        show_popup("Rewinded time!", 1.5)
         save_game_state()
     else:
         print("Not enough save states to rewind to second to last.")
@@ -382,7 +396,7 @@ wave_total_enemies = 5
 wave_spawn_interval = 2000
 last_wave_spawn = 0
 wave_enemies_per_spawn = 1
-wave_number = 4
+wave_number = 0
 wave_queue_index = 0
 NUM_WAVES = 5
 preloaded_waves = []  # List of lists, one list per wave
@@ -431,6 +445,7 @@ while True:
                     # wave button
                     dist_wave = pygame.math.Vector2(mouse_pos).distance_to((WAVE_BUTTON_X, WAVE_BUTTON_Y))
                     dist_rewind = pygame.math.Vector2(mouse_pos).distance_to((REWIND_BUTTON_X, REWIND_BUTTON_Y))
+                    dist_quit = pygame.math.Vector2(mouse_pos).distance_to((QUIT_BUTTON_X, QUIT_BUTTON_Y))
 
                     if dist_rewind <= REWIND_BUTTON_RADIUS:
                         if not wave_active and not rewind_used:
@@ -457,8 +472,11 @@ while True:
                             wave_queue = [copy.deepcopy(e) for e in preloaded_waves[wave_number]]
                             wave_total_enemies = len(wave_queue)
                             wave_number += 1  # increase after accessing
-
                         continue
+
+                    if dist_quit <= QUIT_BUTTON_RADIUS:
+                        pygame.quit()
+                        sys.exit()
 
                 # grid clicking
                 for row in range(ROWS):
@@ -526,7 +544,7 @@ while True:
         if wave_spawned_count >= wave_total_enemies and not enemies:
             if player_hp > 0:
                 wave_active = False
-                currency += 500
+                currency += reward
                 save_game_state()
                 if wave_number == 5:
                     show_popup(f"Game Finished! Score = {player_hp*currency/100}", 10)
@@ -540,7 +558,14 @@ while True:
     for number, (x, y) in button_positions.items():
         dist = pygame.math.Vector2(mouse_pos).distance_to((x, y))
         if dist <= BUTTON_RADIUS:
-            tooltip_text = f"Place turret type {number}"
+            if number == 2:
+                tooltip_text = "Fire turret.\nShoots around it.\nCost = 200"
+            if number == 3:
+                tooltip_text = "Electric turret.\nShoots diagonally.\nCost = 100"
+            if number == 4:
+                tooltip_text = "Poison turret.\nShoots orthogonally.\nCost = 100"
+            if number == 5:
+                tooltip_text = "Wall.\nCost = 50"
             break
 
     # tooltip hover start wave
@@ -553,7 +578,13 @@ while True:
     if tooltip_text is None:
         dist_rewind = pygame.math.Vector2(mouse_pos).distance_to((REWIND_BUTTON_X, REWIND_BUTTON_Y))
         if dist_rewind <= REWIND_BUTTON_RADIUS:
-            tooltip_text = "Rewind to previous state"
+            tooltip_text = "Rewind time...?"
+
+    # tooltip hover quit
+    if tooltip_text is None:
+        dist_quit = pygame.math.Vector2(mouse_pos).distance_to((QUIT_BUTTON_X, QUIT_BUTTON_Y))
+        if dist_quit <= QUIT_BUTTON_RADIUS:
+            tooltip_text = "Quit...? :("
 
     draw_grid()
     if selected_number:
