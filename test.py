@@ -562,11 +562,11 @@ while True:
         if wave_spawned_count >= wave_total_enemies and not enemies:
             if player_hp > 0:
                 wave_active = False
-                currency += reward
-                save_game_state()
                 if wave_number == 5:
-                    show_popup(f"Game Finished! Score = {player_hp*currency/100}", 10)
+                    show_popup(f"Game Finished! Score = {player_hp*(currency+100)/100}", 10)
                 else:
+                    currency += reward
+                    save_game_state()
                     show_popup("Wave cleared!", 1.5)
 
     mouse_pos = pygame.mouse.get_pos()
