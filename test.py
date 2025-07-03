@@ -9,7 +9,7 @@ import time
 pygame.init()
 mixer.init()
 mixer.music.load("8bit.mp3")
-pygame.mixer.music.set_volume(0.3)
+pygame.mixer.music.set_volume(0.1)
 pygame.mixer.music.play(-1,0.0)
 
 info = pygame.display.Info()
@@ -101,9 +101,9 @@ popup = {
 }
 
 def play_sound(sound_file):
-    SHOOT_SOUND = pygame.mixer.Sound(sound_file)
-    SHOOT_SOUND.set_volume(0.1)
-    SHOOT_SOUND.play()
+    sound = pygame.mixer.Sound(sound_file)
+    sound.set_volume(0.2)
+    sound.play()
 
 def show_popup(text, timer):
     popup["text"] = text
@@ -229,6 +229,7 @@ class Enemy:
             logic_matrix[self.y][self.x] = 0
             if self in enemies:
                 enemies.remove(self)
+            play_sound("damage_taken.mp3")
             hp_ref[0] -= 1
             return
 
@@ -245,6 +246,7 @@ class Enemy:
                 logic_matrix[new_y][new_x] = 0
             if self in enemies:
                 enemies.remove(self)
+                play_sound("enemy_death.mp3")
             return
 
         # normal move, swap places with dead zones
@@ -276,6 +278,7 @@ def fire_turrets(matrix, tick):
         all_dirs = orthogonal + diagonal # aoe
 
         if t_type == 2 and tick % 3 == 0: #aoe turret fires on %3 ticks
+            play_sound("shoot_orange.mp3")
             for dx, dy in all_dirs:
                 tx, ty = x + dx, y + dy
                 if 0 <= tx < COLS and 0 <= ty < ROWS and matrix[ty][tx] == 0:
@@ -289,6 +292,7 @@ def fire_turrets(matrix, tick):
                         fired.append((tx, ty))
 
         elif t_type == 3 and tick % 2 == 0: # x sign turret fires on %2 ticks
+            play_sound("shoot_blue.mp3")
             for dx, dy in diagonal:
                 tx, ty = x + dx, y + dy
                 if 0 <= tx < COLS and 0 <= ty < ROWS and matrix[ty][tx] == 0:
@@ -302,6 +306,7 @@ def fire_turrets(matrix, tick):
                         fired.append((tx, ty))
 
         elif t_type == 4 and tick % 2 == 1: # + sign turret fires on %2==1 ticks
+            play_sound("shoot_green.mp3")
             for dx, dy in orthogonal:
                 tx, ty = x + dx, y + dy
                 if 0 <= tx < COLS and 0 <= ty < ROWS and matrix[ty][tx] == 0:
@@ -436,6 +441,7 @@ while True:
             sys.exit()
 
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            play_sound("button_click.mp3")
             mouse_pos = pygame.mouse.get_pos()
 
             # turret button checking
@@ -506,6 +512,7 @@ while True:
                                 selected_number = None
 
     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+        play_sound("button_click.mp3")
         selected_number = None
 
     current_time = pygame.time.get_ticks()
@@ -608,6 +615,5 @@ while True:
     draw_popup()
     if tooltip_text:
         draw_tooltip(screen, tooltip_text, mouse_pos)
-        play_sound("boom.mp3")
     pygame.display.flip()
     clock.tick(60)
