@@ -401,32 +401,20 @@ objects_to_animate = [Animated((0, 0), [background_img], time_to_complete_loop =
 
 sprites_coords = {}
 
-for value in sprites:
-    sprites_coords[value] = [(-1, -1)]
-    # See if sprites is an array or not
-    try:
-        sprites[value][0]
-        objects_to_animate.append(Animated(sprites_coords[value], sprites[value], coords_can_change = True, time_to_complete_loop = 1))
-    except:
-        objects_to_animate.append(Animated(sprites_coords[value], [sprites[value]], coords_can_change = True, time_to_complete_loop = 1))
+if False:
+    for value in sprites:
+        sprites_coords[value] = [(-1, -1)]
+        # See if sprites is an array or not
+        try:
+            sprites[value][0]
+            objects_to_animate.append(Animated(sprites_coords[value], sprites[value], coords_can_change = True, time_to_complete_loop = 1))
+        except:
+            objects_to_animate.append(Animated(sprites_coords[value], [sprites[value]], coords_can_change = True, time_to_complete_loop = 1))
 
 objects_to_animate.append(Animated((GRID_START_X + GRID_WIDTH + CELL_SIZE + 20, GRID_START_Y + GRID_HEIGHT // 2 + 70), cat_bottom_right))
 
 
 def draw_grid():
-    
-    # screen.blit(background_img, (0, 0))
-
-    # draw grid (continuously)
-    for row in range(ROWS):
-        for col in range(COLS):
-            x = GRID_START_X + col * CELL_SIZE
-            y = GRID_START_Y + row * CELL_SIZE
-
-            value = LOGIC_MATRIX[row][col]
-            if value in sprites:
-                sprites_coords[value][0] = (x, y)
-
     animation_loop()
 
     # turret buttons:
@@ -459,7 +447,7 @@ def draw_grid():
     screen.blit(hp_text, hp_text_rect)
     screen.blit(currency_text, currency_text_rect)
 
-    # draw grid (continuously - need to do again because of overwriting by animation_loop)
+    # draw grid (continuously)
     for row in range(ROWS):
         for col in range(COLS):
             x = GRID_START_X + col * CELL_SIZE
@@ -468,12 +456,7 @@ def draw_grid():
 
             value = LOGIC_MATRIX[row][col]
             if value in sprites:
-                sprites_coords[value][0] = (x, y)
-                # print(value, sprites_coords[value])
-                # screen.blit(sprites[value], (x, y))
-            elif value != 0:
-                text = font.render(str(value), True, BLACK)
-                screen.blit(text, text.get_rect(center=rect.center))
+                screen.blit(sprites[value], (x, y))
 
 def rewind():
     global LOGIC_MATRIX, enemies, turrets, player_hp, wave_number, currency
