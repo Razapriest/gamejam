@@ -68,9 +68,9 @@ def load_img(path):
     return img
 
 
-cat_bottom_right = [load_sprite("cat_animation/f1.png", CUSTOM_SIZE=(530 // 2, 615 // 2)),
-                    load_sprite("cat_animation/f2.png", CUSTOM_SIZE=(530 // 2, 615 // 2)),
-                    load_sprite("cat_animation/f3.png", CUSTOM_SIZE=(530 // 2, 615 // 2))]
+# cat_bottom_right = [load_sprite("cat_animation/f1.png", CUSTOM_SIZE=(530 // 2, 615 // 2)),
+ #                   load_sprite("cat_animation/f2.png", CUSTOM_SIZE=(530 // 2, 615 // 2)),
+ #                   load_sprite("cat_animation/f3.png", CUSTOM_SIZE=(530 // 2, 615 // 2))]
 
 wave_button_image = pygame.transform.scale(pygame.image.load("start_wave.png").convert_alpha(), BUTTON_SIZE)
 rewind_button_image = pygame.transform.scale(pygame.image.load("rewind_button.png").convert_alpha(), BUTTON_SIZE)
@@ -79,6 +79,8 @@ quit_button_image = pygame.transform.scale(pygame.image.load("quit_button_final.
 
 background_img = pygame.image.load("background_layout.png").convert()
 background_img = pygame.transform.scale(background_img, (SCREEN_WIDTH, SCREEN_HEIGHT))
+
+background_img = [load_img("background_animation/frame_" + str(num) + "_delay-0.2s.png") for num in [0, 1, 2, 3, 5, 6, 7, 8]]
 
 # left button settings
 BUTTON_CENTER_X = GRID_START_X - CELL_SIZE * 3
@@ -417,7 +419,7 @@ def animation_loop():
         object.advance_frame()
 
 
-objects_to_animate = [Animated((0, 0), [background_img], time_to_complete_loop=0.5)]
+objects_to_animate = [Animated((0, 0), background_img, time_to_complete_loop=2)]
 
 sprites_coords = {}
 
@@ -433,8 +435,8 @@ if False:
             objects_to_animate.append(
                 Animated(sprites_coords[value], [sprites[value]], coords_can_change=True, time_to_complete_loop=1))
 
-objects_to_animate.append(
-    Animated((GRID_START_X + GRID_WIDTH + CELL_SIZE + 20, GRID_START_Y + GRID_HEIGHT // 2 + 70), cat_bottom_right))
+# objects_to_animate.append(
+  #  Animated((GRID_START_X + GRID_WIDTH + CELL_SIZE + 20, GRID_START_Y + GRID_HEIGHT // 2 + 70), cat_bottom_right))
 
 
 def draw_grid():
