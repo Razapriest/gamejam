@@ -37,7 +37,7 @@ sprites = {
     3: load_sprite("turret_2.png"),
     4: load_sprite("turret_3.png"),
     5: load_sprite("turret_4.png"),
-    6: load_sprite("enemy.png"),
+    6: [load_sprite("enemy.png"), load_sprite("turret_1.png")],
     7: load_sprite("projectile_1.png"),
     8: load_sprite("projectile_2.png"),
     9: load_sprite("projectile_3.png"),
@@ -51,10 +51,20 @@ turret_button_images = {
     4: pygame.image.load("button_4.png").convert_alpha(),
 }
 
+# helper function for the minions test
+def load_img(path):
+    img = pygame.image.load(path).convert()
+    img = pygame.transform.scale(img, (SCREEN_WIDTH, SCREEN_HEIGHT))
+    return img
+
+minions = [load_img("minions_test/frame_0" + str(num) + "_delay-0.04s.gif") for num in range(10)]
+
 wave_button_image = pygame.image.load("button_start.png").convert_alpha()
 rewind_button_image = pygame.image.load("button_rewind.png").convert_alpha()
 background_img = pygame.image.load("background_layout.png").convert()
 background_img = pygame.transform.scale(background_img, (SCREEN_WIDTH, SCREEN_HEIGHT))
+background_img2 = pygame.image.load("minion.gif").convert()
+background_img2 = pygame.transform.scale(background_img2, (SCREEN_WIDTH, SCREEN_HEIGHT))
 
 # left button settings
 BUTTON_CENTER_X = GRID_START_X - CELL_SIZE * 3
@@ -305,8 +315,88 @@ def trigger_anomaly(hp_ref):
     if anomaly_type == 1:
         hp_ref[0] -= 1
 
+
+# Helper class that handles all animated object
+# Parameters: object that gets the sprites changed
+            # animation_frames is the vector that is used for animation loops
+            # time_to_complete_loop : how fast the loop should go, in seconds
+            # loop_back : whether to change loop direction upon finishing a loop
+            # coords_can_change : if True, then coords will be evaluated upon advancing the frame
+class Animated:
+    # Static members: starting clock
+    starting_clock = 0
+    has_overwritten_clock = False
+    # time_to_complete_loop = (float)(1.0) # 1 second for an entire animation loop
+    
+    def __init__(self, coords, animation_frames, time_to_complete_loop = ((float)(1.0)), loop_back = False, coords_can_change = False):
+        self.coords = coords
+        self.animation_frames = animation_frames
+        self.animation_frame_direction = 1
+        self.animation_frame = 0
+        self.time_to_complete_loop = time_to_complete_loop
+        self.loop_back = loop_back
+        self.coords_can_change = coords_can_change
+        self.time_to_change_frame = self.time_to_complete_loop / ((float)(len(self.animation_frames)))
+        self.last_updated = pygame.time.get_ticks()
+        # When the first animated object is created, get the time
+        if not(Animated.has_overwritten_clock):
+            Animated.has_overwritten_clock = True
+            Animated.starting_clock = pygame.time.get_ticks()
+
+    # Function that gets to the next frame, if the time to switch to the next frame has come
+    def advance_frame(self):
+        # use the global screen variable
+        global screen
+        # if the frame hasn't been updated in a while
+        if(pygame.time.get_ticks() - self.last_updated > self.time_to_change_frame * 1000):
+            self.last_updated = pygame.time.get_ticks()
+            # Switch to the next frame
+            self.animation_frame += self.animation_frame_direction
+            # If the next frame is out of bounds, reset the loop
+            if(self.animation_frame == -1 or self.animation_frame == len(self.animation_frames)):
+                self.animation_frame_direction *= -1
+                if not(self.loop_back):
+                    self.animation_frame_direction = 1
+                    self.animation_frame = -1
+                self.animation_frame += self.animation_frame_direction
+        if not(self.coords_can_change):
+            screen.blit(self.animation_frames[self.animation_frame], self.coords)
+        else:
+            if(self.coords[0][0] >= 0):
+                screen.blit(self.animation_frames[self.animation_frame], self.coords[0])
+
+objects_to_animate = []
+def animation_loop():
+    for object in objects_to_animate:
+        object.advance_frame()
+
+objects_to_animate = [Animated((0, 0), [background_img], time_to_complete_loop = 0.5)]
+
+sprites_coords = {}
+
+for value in sprites:
+    sprites_coords[value] = [(-1, -1)]
+    if value != 6:
+        objects_to_animate.append(Animated(sprites_coords[value], [sprites[value]], coords_can_change = True))
+    else:
+        objects_to_animate.append(Animated(sprites_coords[value], sprites[value], coords_can_change = True, time_to_complete_loop = 0.3))
+
+
 def draw_grid():
-    screen.blit(background_img, (0, 0))
+    
+    # screen.blit(background_img, (0, 0))
+
+    # draw grid (continuously)
+    for row in range(ROWS):
+        for col in range(COLS):
+            x = GRID_START_X + col * CELL_SIZE
+            y = GRID_START_Y + row * CELL_SIZE
+
+            value = LOGIC_MATRIX[row][col]
+            if value in sprites:
+                sprites_coords[value][0] = (x, y)
+
+    animation_loop()
 
     # turret buttons:
     for number, (x, y) in button_positions.items():
@@ -331,7 +421,7 @@ def draw_grid():
     screen.blit(wave_num_text, wave_text_rect)
     screen.blit(hp_text, hp_text_rect)
 
-    # draw grid (continuously)
+    # draw grid (continuously - need to do again because of overwriting by animation_loop)
     for row in range(ROWS):
         for col in range(COLS):
             x = GRID_START_X + col * CELL_SIZE
@@ -340,10 +430,14 @@ def draw_grid():
 
             value = LOGIC_MATRIX[row][col]
             if value in sprites:
-                screen.blit(sprites[value], (x, y))
+                sprites_coords[value][0] = (x, y)
+                # print(value, sprites_coords[value])
+                # screen.blit(sprites[value], (x, y))
             elif value != 0:
                 text = font.render(str(value), True, BLACK)
                 screen.blit(text, text.get_rect(center=rect.center))
+    
+    # animation_loop()
 
 def rewind():
     global LOGIC_MATRIX, enemies, turrets, player_hp, wave_number
@@ -404,7 +498,7 @@ for wave_num in range(1, NUM_WAVES + 1):
 rewind_used = False
 save_game_state()
 
-
+# Game loop
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
@@ -542,6 +636,7 @@ while True:
         if dist_rewind <= REWIND_BUTTON_RADIUS:
             tooltip_text = "Rewind to previous state"
 
+    screen.fill((255, 255, 255))
     draw_grid()
     if selected_number:
         turret_img = sprites[selected_number]
@@ -554,4 +649,5 @@ while True:
     if tooltip_text:
         draw_tooltip(screen, tooltip_text, mouse_pos)
     pygame.display.flip()
+    pygame.display.update()
     clock.tick(60)
