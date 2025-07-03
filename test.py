@@ -9,7 +9,7 @@ pygame.init()
 mixer.init()
 mixer.music.load("8bit.mp3")
 pygame.mixer.music.set_volume(0.15)
-pygame.mixer.music.play(-1,0.0)
+pygame.mixer.music.play(-1, 0.0)
 
 info = pygame.display.Info()
 SCREEN_WIDTH, SCREEN_HEIGHT = info.current_w, info.current_h
@@ -32,9 +32,11 @@ GRID_START_Y = (SCREEN_HEIGHT - int(GRID_HEIGHT * 1.25)) // 2
 
 WHITE = (255, 255, 255)
 
-def load_sprite(filename, CUSTOM_SIZE = (CELL_SIZE, CELL_SIZE)):
+
+def load_sprite(filename, CUSTOM_SIZE=(CELL_SIZE, CELL_SIZE)):
     img = pygame.image.load(filename).convert_alpha()
     return pygame.transform.scale(img, CUSTOM_SIZE)
+
 
 sprites = {
     1: load_sprite("cat.png"),
@@ -58,19 +60,22 @@ turret_button_images = {
     4: pygame.transform.scale(pygame.image.load("button_wall.png").convert_alpha(), BUTTON_SIZE),
 }
 
+
 # helper function for the minions test
 def load_img(path):
     img = pygame.image.load(path).convert()
     img = pygame.transform.scale(img, (SCREEN_WIDTH, SCREEN_HEIGHT))
     return img
 
-cat_bottom_right = [load_sprite("cat_animation/f1.png", CUSTOM_SIZE = (530 // 2, 615 // 2)),
-                    load_sprite("cat_animation/f2.png", CUSTOM_SIZE = (530 // 2, 615 // 2)),
-                    load_sprite("cat_animation/f3.png", CUSTOM_SIZE = (530 // 2, 615 // 2))]
+
+cat_bottom_right = [load_sprite("cat_animation/f1.png", CUSTOM_SIZE=(530 // 2, 615 // 2)),
+                    load_sprite("cat_animation/f2.png", CUSTOM_SIZE=(530 // 2, 615 // 2)),
+                    load_sprite("cat_animation/f3.png", CUSTOM_SIZE=(530 // 2, 615 // 2))]
 
 wave_button_image = pygame.transform.scale(pygame.image.load("start_wave.png").convert_alpha(), BUTTON_SIZE)
 rewind_button_image = pygame.transform.scale(pygame.image.load("rewind_button.png").convert_alpha(), BUTTON_SIZE)
-quit_button_image = pygame.transform.scale(pygame.image.load("quit_button_final.png").convert_alpha(), BUTTON_SIZE_SMALL)
+quit_button_image = pygame.transform.scale(pygame.image.load("quit_button_final.png").convert_alpha(),
+                                           BUTTON_SIZE_SMALL)
 
 background_img = pygame.image.load("background_layout.png").convert()
 background_img = pygame.transform.scale(background_img, (SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -87,7 +92,7 @@ button_positions = {
     5: (BUTTON_CENTER_X - CELL_SIZE * 1.5, BUTTON_CENTER_Y - 10),  # Left
 }
 
-#right button settings
+# right button settings
 WAVE_BUTTON_X = GRID_START_X + GRID_WIDTH + CELL_SIZE * 2 - 5
 WAVE_BUTTON_Y = GRID_START_Y + GRID_HEIGHT // 2.8
 WAVE_BUTTON_RADIUS = CELL_SIZE * 0.75
@@ -110,16 +115,19 @@ popup = {
     "duration": 1  # seconds
 }
 
+
 def play_sound(sound_file):
     sound = pygame.mixer.Sound(sound_file)
     sound.set_volume(0.2)
     sound.play()
+
 
 def show_popup(text, timer):
     popup["text"] = text
     popup["start_time"] = time.time()
     popup["active"] = True
     popup["duration"] = timer
+
 
 def draw_popup():
     if not popup["active"]:
@@ -130,7 +138,7 @@ def draw_popup():
         popup["active"] = False
         return
 
-    #rectangle
+    # rectangle
     rect_width, rect_height = len(popup["text"]) * 16 + 50, 100
     rect_x = (screen.get_width() - rect_width) // 2
     rect_y = (screen.get_height() - rect_height) // 2
@@ -139,9 +147,9 @@ def draw_popup():
     s.fill((0, 0, 0, 180))  # semi transparent (180)
     screen.blit(s, (rect_x, rect_y))
 
-    #popup text
+    # popup text
     text_surf = font.render(popup["text"], True, (255, 255, 255))
-    text_rect = text_surf.get_rect(center=(rect_x + rect_width//2, rect_y + rect_height//2))
+    text_rect = text_surf.get_rect(center=(rect_x + rect_width // 2, rect_y + rect_height // 2))
     screen.blit(text_surf, text_rect)
 
 
@@ -168,6 +176,8 @@ def draw_tooltip(screen, text, mouse_pos):
     for surf in line_surfs:
         screen.blit(surf, (tooltip_x, current_y))
         current_y += surf.get_height()
+
+
 # Saves a state, used for recall
 def save_game_state():
     state = {
@@ -177,7 +187,8 @@ def save_game_state():
         'currency': currency,
         'wave_number': wave_number,
     }
-    saved_states.append(state) #save everything
+    saved_states.append(state)  # save everything
+
 
 class Enemy:
     def __init__(self):
@@ -269,13 +280,16 @@ class Enemy:
             logic_matrix[new_y][new_x] = self.type
             self.x, self.y = new_x, new_y
 
+
 class Turret:
     def __init__(self, x, y, turret_type):
         self.x = x
         self.y = y
         self.type = turret_type
 
+
 last_fired_tiles = []
+
 
 def fire_turrets(matrix, tick):
     fired = []
@@ -283,11 +297,11 @@ def fire_turrets(matrix, tick):
     for turret in turrets:
         x, y, t_type = turret.x, turret.y, turret.type
 
-        orthogonal = [(-1, 0), (1, 0), (0, -1), (0, 1)] # plus sign
-        diagonal = [(-1, -1), (-1, 1), (1, -1), (1, 1)] # x sign
-        all_dirs = orthogonal + diagonal # aoe
+        orthogonal = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # plus sign
+        diagonal = [(-1, -1), (-1, 1), (1, -1), (1, 1)]  # x sign
+        all_dirs = orthogonal + diagonal  # aoe
 
-        if t_type == 2 and tick % 3 == 0: #aoe turret fires on %3 ticks
+        if t_type == 2 and tick % 3 == 0:  # aoe turret fires on %3 ticks
             play_sound("shoot_orange.mp3")
             for dx, dy in all_dirs:
                 tx, ty = x + dx, y + dy
@@ -301,7 +315,7 @@ def fire_turrets(matrix, tick):
                         matrix[ty][tx] = 7
                         fired.append((tx, ty))
 
-        elif t_type == 3 and tick % 2 == 0: # x sign turret fires on %2 ticks
+        elif t_type == 3 and tick % 2 == 0:  # x sign turret fires on %2 ticks
             play_sound("shoot_blue.mp3")
             for dx, dy in diagonal:
                 tx, ty = x + dx, y + dy
@@ -315,7 +329,7 @@ def fire_turrets(matrix, tick):
                         matrix[ty][tx] = 8
                         fired.append((tx, ty))
 
-        elif t_type == 4 and tick % 2 == 1: # + sign turret fires on %2==1 ticks
+        elif t_type == 4 and tick % 2 == 1:  # + sign turret fires on %2==1 ticks
             play_sound("shoot_green.mp3")
             for dx, dy in orthogonal:
                 tx, ty = x + dx, y + dy
@@ -331,6 +345,7 @@ def fire_turrets(matrix, tick):
 
     return fired
 
+
 def trigger_anomaly():
     show_popup("Rewinded time!", 1.5)
     play_sound("rewind_sound.mp3")
@@ -339,23 +354,24 @@ def trigger_anomaly():
     while 3 <= random_x <= 5 and 3 <= random_y <= 5:
         random_x = random.randint(1, COLS - 2)
         random_y = random.randint(1, ROWS - 2)
-    LOGIC_MATRIX[random_y][random_x] =  10
-
+    LOGIC_MATRIX[random_y][random_x] = 10
 
 
 # Helper class that handles all animated object
 # Parameters: object that gets the sprites changed
-            # animation_frames is the vector that is used for animation loops
-            # time_to_complete_loop : how fast the loop should go, in seconds
-            # loop_back : whether to change loop direction upon finishing a loop
-            # coords_can_change : if True, then coords will be evaluated upon advancing the frame
+# animation_frames is the vector that is used for animation loops
+# time_to_complete_loop : how fast the loop should go, in seconds
+# loop_back : whether to change loop direction upon finishing a loop
+# coords_can_change : if True, then coords will be evaluated upon advancing the frame
 class Animated:
     # Static members: starting clock
     starting_clock = 0
     has_overwritten_clock = False
+
     # time_to_complete_loop = (float)(1.0) # 1 second for an entire animation loop
-    
-    def __init__(self, coords, animation_frames, time_to_complete_loop = ((float)(1.0)), loop_back = False, coords_can_change = False):
+
+    def __init__(self, coords, animation_frames, time_to_complete_loop=((float)(1.0)), loop_back=False,
+                 coords_can_change=False):
         self.coords = coords
         self.animation_frames = animation_frames
         self.animation_frame_direction = 1
@@ -366,7 +382,7 @@ class Animated:
         self.time_to_change_frame = self.time_to_complete_loop / ((float)(len(self.animation_frames)))
         self.last_updated = pygame.time.get_ticks()
         # When the first animated object is created, get the time
-        if not(Animated.has_overwritten_clock):
+        if not (Animated.has_overwritten_clock):
             Animated.has_overwritten_clock = True
             Animated.starting_clock = pygame.time.get_ticks()
 
@@ -375,29 +391,33 @@ class Animated:
         # use the global screen variable
         global screen
         # if the frame hasn't been updated in a while
-        if(pygame.time.get_ticks() - self.last_updated > self.time_to_change_frame * 1000):
+        if (pygame.time.get_ticks() - self.last_updated > self.time_to_change_frame * 1000):
             self.last_updated = pygame.time.get_ticks()
             # Switch to the next frame
             self.animation_frame += self.animation_frame_direction
             # If the next frame is out of bounds, reset the loop
-            if(self.animation_frame == -1 or self.animation_frame == len(self.animation_frames)):
+            if (self.animation_frame == -1 or self.animation_frame == len(self.animation_frames)):
                 self.animation_frame_direction *= -1
-                if not(self.loop_back):
+                if not (self.loop_back):
                     self.animation_frame_direction = 1
                     self.animation_frame = -1
                 self.animation_frame += self.animation_frame_direction
-        if not(self.coords_can_change):
+        if not (self.coords_can_change):
             screen.blit(self.animation_frames[self.animation_frame], self.coords)
         else:
-            if(self.coords[0][0] >= 0):
+            if (self.coords[0][0] >= 0):
                 screen.blit(self.animation_frames[self.animation_frame], self.coords[0])
 
+
 objects_to_animate = []
+
+
 def animation_loop():
     for object in objects_to_animate:
         object.advance_frame()
 
-objects_to_animate = [Animated((0, 0), [background_img], time_to_complete_loop = 0.5)]
+
+objects_to_animate = [Animated((0, 0), [background_img], time_to_complete_loop=0.5)]
 
 sprites_coords = {}
 
@@ -407,11 +427,14 @@ if False:
         # See if sprites is an array or not
         try:
             sprites[value][0]
-            objects_to_animate.append(Animated(sprites_coords[value], sprites[value], coords_can_change = True, time_to_complete_loop = 1))
+            objects_to_animate.append(
+                Animated(sprites_coords[value], sprites[value], coords_can_change=True, time_to_complete_loop=1))
         except:
-            objects_to_animate.append(Animated(sprites_coords[value], [sprites[value]], coords_can_change = True, time_to_complete_loop = 1))
+            objects_to_animate.append(
+                Animated(sprites_coords[value], [sprites[value]], coords_can_change=True, time_to_complete_loop=1))
 
-objects_to_animate.append(Animated((GRID_START_X + GRID_WIDTH + CELL_SIZE + 20, GRID_START_Y + GRID_HEIGHT // 2 + 70), cat_bottom_right))
+objects_to_animate.append(
+    Animated((GRID_START_X + GRID_WIDTH + CELL_SIZE + 20, GRID_START_Y + GRID_HEIGHT // 2 + 70), cat_bottom_right))
 
 
 def draw_grid():
@@ -439,8 +462,8 @@ def draw_grid():
     hp_text = font.render(f"HP: {player_hp}", True, WHITE)
     currency_text = font.render(f"Currency: {currency}", True, WHITE)
 
-    wave_text_rect = wave_num_text.get_rect(center=(SCREEN_WIDTH // 2, below_grid_y + 50)) # wave text
-    hp_text_rect = hp_text.get_rect(center=(SCREEN_WIDTH // 2, below_grid_y + 80)) # hp text
+    wave_text_rect = wave_num_text.get_rect(center=(SCREEN_WIDTH // 2, below_grid_y + 50))  # wave text
+    hp_text_rect = hp_text.get_rect(center=(SCREEN_WIDTH // 2, below_grid_y + 80))  # hp text
     currency_text_rect = currency_text.get_rect(center=(SCREEN_WIDTH // 2, below_grid_y + 110))
 
     screen.blit(wave_num_text, wave_text_rect)
@@ -458,6 +481,7 @@ def draw_grid():
             if value in sprites:
                 screen.blit(sprites[value], (x, y))
 
+
 def rewind():
     global LOGIC_MATRIX, enemies, turrets, player_hp, wave_number, currency
     if len(saved_states) >= 2:
@@ -473,6 +497,7 @@ def rewind():
         save_game_state()
     else:
         print("Not enough save states to rewind to second to last.")
+
 
 clock = pygame.time.Clock()
 last_spawn = pygame.time.get_ticks()
@@ -552,7 +577,8 @@ while True:
                             # rewind
                             for row in range(ROWS):
                                 for col in range(COLS):
-                                    if LOGIC_MATRIX[row][col] == 7 or LOGIC_MATRIX[row][col] == 8 or LOGIC_MATRIX[row][col] == 9:
+                                    if LOGIC_MATRIX[row][col] == 7 or LOGIC_MATRIX[row][col] == 8 or LOGIC_MATRIX[row][
+                                        col] == 9:
                                         LOGIC_MATRIX[row][col] = 0
                             rewind()
                             rewind_used = True
@@ -585,7 +611,8 @@ while True:
                         cell_y = GRID_START_Y + row * CELL_SIZE
                         cell_rect = pygame.Rect(cell_x, cell_y, CELL_SIZE, CELL_SIZE)
                         if cell_rect.collidepoint(mouse_pos):
-                            if not wave_active and LOGIC_MATRIX[row][col] == 0 and selected_number  and currency >= currency_needed:
+                            if not wave_active and LOGIC_MATRIX[row][
+                                col] == 0 and selected_number and currency >= currency_needed:
                                 LOGIC_MATRIX[row][col] = selected_number
                                 if selected_number in (2, 3, 4, 5):
                                     turrets.append(Turret(col, row, selected_number))
@@ -600,7 +627,7 @@ while True:
 
     current_time = pygame.time.get_ticks()
 
-    if current_time - last_move >= move_interval: # 1 "move tick" = 1 second
+    if current_time - last_move >= move_interval:  # 1 "move tick" = 1 second
         last_move = current_time
         global_tick += 1
 
@@ -646,7 +673,7 @@ while True:
             if player_hp > 0:
                 wave_active = False
                 if wave_number == 5:
-                    show_popup(f"Game Finished! Score = {player_hp*(currency+100)/100}", 10)
+                    show_popup(f"Game Finished! Score = {player_hp * (currency + 100) / 100}", 10)
                 else:
                     currency += reward
                     save_game_state()
