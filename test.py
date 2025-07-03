@@ -1,5 +1,4 @@
 import pygame
-from pygame.locals import *
 from pygame import mixer
 import random
 import sys
@@ -9,14 +8,14 @@ import time
 pygame.init()
 mixer.init()
 mixer.music.load("8bit.mp3")
-pygame.mixer.music.set_volume(0.1)
+pygame.mixer.music.set_volume(0.15)
 pygame.mixer.music.play(-1,0.0)
 
 info = pygame.display.Info()
 SCREEN_WIDTH, SCREEN_HEIGHT = info.current_w, info.current_h
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Butterfly Defect")
+pygame.display.set_caption("Protect Zeeble")
 font = pygame.font.Font("Grand9K Pixel.ttf", 24)
 
 player_hp = 10
@@ -323,6 +322,7 @@ def fire_turrets(matrix, tick):
 
 def trigger_anomaly():
     show_popup("Rewinded time!", 1.5)
+    play_sound("rewind_sound.mp3")
     random_x = random.randint(1, COLS - 2)
     random_y = random.randint(1, ROWS - 2)
     while 3 <= random_x <= 5 and 3 <= random_y <= 5:
